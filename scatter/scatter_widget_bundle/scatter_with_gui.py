@@ -17,8 +17,7 @@ class ScatterWithGui(AnyDataWithGui[ScatterData]):
         self.callbacks.default_value_provider = self.default_value_provider  # needed since we do not use the default constructor
         self.callbacks.edit = self.edit  # needed for edition
 
-        # on_change needs to be set, since the presenter has a cache
-        # (this is where it will update its cache)
+        # on_change needs to be set, since the presenter has a cache (this is where it will update its cache)
         self.callbacks.on_change = self.on_change
 
     def present_str(self, value: ScatterData) -> str:
@@ -28,7 +27,7 @@ class ScatterWithGui(AnyDataWithGui[ScatterData]):
     #     imgui.text(f"present {value.info()}")
 
     def edit(self, _value: ScatterData) -> tuple[bool, ScatterData]:
-        # _value is not used, it is cached in on_change
+        # _value is not used, it is cached in the presenter
         changed = self._presenter.gui()
         return changed, self._presenter.scatter
 

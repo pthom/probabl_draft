@@ -1,13 +1,14 @@
-from imgui_bundle import imgui, hello_imgui, ImVec4, imgui_ctx, immvision, ImVec2
+from imgui_bundle import imgui, hello_imgui, ImVec4, imgui_ctx, immvision, ImVec2, icons_fontawesome
 from fiatlight.fiat_kits.fiat_image import ImageRgb
 from pydantic import BaseModel
-from .scatter_data import ScatterData, Point2d, Color
+from .scatter_data import ScatterData, ScatterCluster, Point2d, Color
 from .coordinate_transformer import CoordinateTransformer
 
 
 class ScatterGuiOptions(BaseModel):
     image_size_em: Point2d = (20, 20)
     random_brush_size: float = 0.1  # as a ratio of the scatter bounds
+    brush_intensity: int = 1
     selected_class_idx: int = 0
 
 
@@ -15,35 +16,20 @@ def color_to_imvec4(color: Color) -> ImVec4:
     r, g, b, a = color[0], color[1], color[2], 255
     return ImVec4(r / 255, g / 255, b / 255, a / 255)
 
-def imvec4_to_color(color: ImVec4) -> Color:
-    return int(color.x * 255), int(color.y * 255), int(color.z * 255)
-
 
 def color_edit(label: str, color: Color) -> tuple[bool, Color]:
     def color_to_list(color: Color) -> list[float]:
         return [c / 255 for c in color]
     def list_to_color(color_list: list[float]) -> Color:
-        return tuple(int(c * 255) for c in color_list)
+        return tuple(int(c * 255) for c in color_list)  # type: ignore
 
+    changed = False
     color_list = color_to_list(color)
-    imgui.set_next_item_width(hello_imgui.em_size(6))
-    changed, color_list = imgui.color_picker3(label, color_list)
-    if changed:
-        color = list_to_color(color_list)
-    return changed, color
-
-def color_edit_(label: str, color: Color) -> tuple[bool, Color]:
-    def color_to_list(color: Color) -> list[float]:
-        return [c / 255 for c in color]
-    def list_to_color(color_list: list[float]) -> Color:
-        return tuple(int(c * 255) for c in color_list)
-
-    color_list = color_to_list(color)
-    imgui.set_next_item_width(hello_imgui.em_size(4))
+    imgui.set_next_item_width(hello_imgui.em_size(10))
     changed, color_list = imgui.color_edit3(label, color_list)
     if changed:
-        print("color_list", color_list)
         color = list_to_color(color_list)
+
     return changed, color
 
 
@@ -93,7 +79,7 @@ class ScatterPresenter:
         draw = ImageDraw.Draw(image)
 
         # Draw the dots
-        dot_size_em = 0.4
+        dot_size_em = 0.2
         dot_size_px = em_pixel_size * dot_size_em
 
         for cluster in self.scatter.classes:
@@ -170,6 +156,38 @@ class ScatterPresenter:
 
         return changed
 
+    def _gui_classes(self) -> bool:
+        changed = False
+        for i, scatter_class in enumerate(self.scatter.classes):
+            imgui.push_id(str(i))  # Ensure unique ids within the loop (labels are ids for imgui)
+
+            imgui.set_next_item_width(100)
+            _, scatter_class.name = imgui.input_text("Name", scatter_class.name)
+            imgui.same_line()
+
+            changed_color, scatter_class.color = color_edit("Color", scatter_class.color)
+            if changed_color:
+                changed = True
+            imgui.same_line()
+
+            if imgui.small_button("Clear"):
+                scatter_class.points = []
+                changed = True
+            imgui.same_line()
+
+            if imgui.small_button("Delete"):
+                del self.scatter.classes[i]
+                self.gui_options.selected_class_idx = max(0, self.gui_options.selected_class_idx - 1)
+                changed = True
+            imgui.pop_id()
+
+        if imgui.button("Add class"):
+            new_class = ScatterCluster(name="new", color=(0, 0, 255))
+            self.scatter.classes.append(new_class)
+            changed = True
+
+        return changed
+
     def _gui_options(self) -> None:
         """This draws the options on top of the scatter plot."""
         for i, scatter_class in enumerate(self.scatter.classes):
@@ -189,37 +207,27 @@ class ScatterPresenter:
                 self.invalidate_cache()
 
             imgui.separator_text("Classes")
-            for i, scatter_class in enumerate(self.scatter.classes):
-                imgui.push_id(str(i))  # Ensure unique ids within the loop (labels are ids for imgui)
+            changed_classes = self._gui_classes()
+            if changed_classes:
+                self.invalidate_cache()
 
-                imgui.set_next_item_width(100)
-                _, scatter_class.name = imgui.input_text("Name", scatter_class.name)
-                imgui.same_line()
-
-                changed_color, scatter_class.color = color_edit("Color", scatter_class.color)
-                if changed_color:
-                    self.invalidate_cache()
-                imgui.same_line()
-
-                if imgui.small_button("Clear"):
-                    scatter_class.points = []
-                    self.invalidate_cache()
-                imgui.same_line()
-
-                if imgui.small_button("Delete"):
-                    del self.scatter.classes[i]
-                    self.gui_options.selected_class_idx = max(0, self.gui_options.selected_class_idx - 1)
-                    self.invalidate_cache()
-                imgui.pop_id()
-
-        # Brush size
-        image_width_pixels = hello_imgui.em_size(self.gui_options.image_size_em[0])
-        imgui.set_next_item_width(image_width_pixels)
+        # Brush options
+        imgui.text("Brush")
+        imgui.same_line()
+        imgui.set_next_item_width(hello_imgui.em_size(6))
         _, self.gui_options.random_brush_size = imgui.slider_float(
-            "Brush size",
+            "size",
             self.gui_options.random_brush_size,
             0.01,
             0.5
+        )
+        imgui.same_line()
+        imgui.set_next_item_width(hello_imgui.em_size(6))
+        _, self.gui_options.brush_intensity = imgui.slider_int(
+            "intensity",
+            self.gui_options.brush_intensity,
+            1,
+            10
         )
 
     def _gui_plot(self, needs_texture_refresh: bool) -> bool:
@@ -227,11 +235,30 @@ class ScatterPresenter:
 
         # Display the plot with immvision.image_display
         # "##" hides the label to use the image's position for mouse events
-        mouse_position = immvision.image_display(
+        em_pixel_size = imgui.get_font_size()
+
+        def image_size_as_vec2():
+            width_px = int(self.gui_options.image_size_em[0] * em_pixel_size)
+            height_px = int(self.gui_options.image_size_em[1] * em_pixel_size)
+            return ImVec2(width_px, height_px)
+
+        # Display the image and make it resizable
+        image_display_size = image_size_as_vec2()  # will be changed if the user resizes the widget
+        image_display_size_backup = image_size_as_vec2()
+        mouse_position = immvision.image_display_resizable(
             "##Scatter plot",
             self._plot_image,
+            size=image_display_size,
             refresh_image=needs_texture_refresh
         )
+        if image_display_size.x != image_display_size_backup.x or image_display_size.y != image_display_size_backup.y:
+            print("Image size changed")
+            self.gui_options.image_size_em = (
+                image_display_size.x / em_pixel_size,
+                image_display_size.y / em_pixel_size
+            )
+            self.invalidate_cache()
+
         # Handle event
         if imgui.is_item_hovered():
             if not self._transformer:
@@ -249,11 +276,12 @@ class ScatterPresenter:
             imgui.get_window_draw_list().add_circle_filled(circle_center, circle_radius, circle_color)
             # Add a point on click
             if imgui.is_mouse_down(0):
-                self._add_random_point_around(mouse_position)
+                for i in range(self.gui_options.brush_intensity):
+                    self._add_random_point_around(mouse_position)
                 self.invalidate_cache()
                 changed = True
 
-            # Draw invisible button to capture mouse events
+            # Draw invisible button to capture mouse events on the image
             imgui.set_cursor_screen_pos(image_position)
             imgui.invisible_button("##Scatter plot", imgui.get_item_rect_size())
 
