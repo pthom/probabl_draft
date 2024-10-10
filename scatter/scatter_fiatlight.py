@@ -1,8 +1,6 @@
 import matplotlib
 matplotlib.use('Agg')
 
-from imgui_bundle import immapp, imgui_fig
-from scatter_widget_bundle import ScatterData, ScatterPresenter
 from matplotlib.figure import Figure
 from matplotlib import pyplot as plt
 from sklearn.linear_model import LogisticRegression
@@ -11,7 +9,10 @@ from sklearn.tree import DecisionTreeClassifier
 import pandas as pd
 import numpy as np
 from enum import Enum
+import fiatlight as fl
 
+
+from scatter_widget_bundle import ScatterData
 
 class DecisionStrategy(Enum):
     logistic_regression = LogisticRegression
@@ -42,22 +43,7 @@ def plot_boundary(df: pd.DataFrame, strategy: DecisionStrategy, eps: float=1.0) 
         return None
 
 
-import fiatlight as fl
-from scatter_widget_bundle.scatter_with_gui import ScatterWithGui
 
-# Version 0: only the scatter widget
-# def scatter_source(scatter_data: ScatterData) -> ScatterData:
-#     return scatter_data
-#
-# fl.run(scatter_source)
-
-# Version 1: only one function
-# def scatter_to_figure(scatter_data: ScatterData, strategy: DecisionStrategy) -> Figure:
-#     return plot_boundary(scatter_data.data_as_pandas(), strategy)
-# fl.run(scatter_to_figure)
-
-
-# Version 2: compose two functions
 def scatter_source(scatter_data: ScatterData) -> ScatterData:
     return scatter_data
 
@@ -68,9 +54,7 @@ def scatter_to_figure(
         eps: float=1.0) -> Figure:
     return plot_boundary(scatter_data.data_as_pandas(), strategy, eps)
 
-# fl.run([scatter_source, scatter_to_figure])
 
-# Version 3: a function graph
 def scatter_to_df(scatter_data: ScatterData) -> pd.DataFrame:
     return scatter_data.data_as_pandas()
 
@@ -81,4 +65,3 @@ graph.add_function(scatter_to_df)
 graph.add_link(scatter_source, scatter_to_df)
 graph.add_link(scatter_source, scatter_to_figure)
 fl.run(graph)
-
