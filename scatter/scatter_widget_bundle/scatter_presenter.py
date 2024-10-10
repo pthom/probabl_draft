@@ -8,7 +8,7 @@ from .coordinate_transformer import CoordinateTransformer
 class ScatterGuiOptions(BaseModel):
     image_size_em: Point2d = (20, 20)
     random_brush_size: float = 0.1  # as a ratio of the scatter bounds
-    brush_intensity: int = 1
+    brush_intensity: int = 3
     selected_class_idx: int = 0
 
 
@@ -41,6 +41,9 @@ class ScatterPresenter:
     _cache_valid: bool = False
     _plot_image: ImageRgb  # a cache of the scatter plot as an image
     _transformer: CoordinateTransformer | None = None  # Coordinate transformer instance
+    # undo/redo
+    _undo_stack: list[ScatterData] = []
+    _redo_stack: list[ScatterData] = []
 
     def __init__(self, scatter: ScatterData | None = None):
         self.scatter = scatter
@@ -48,6 +51,29 @@ class ScatterPresenter:
 
     def invalidate_cache(self) -> None:
         self._cache_valid = False
+
+    def _store_undo(self) -> None:
+        import copy
+        self._undo_stack.append(copy.deepcopy(self.scatter))
+        self._redo_stack = []
+
+    def _undo(self) -> None:
+        if len(self._undo_stack) > 0:
+            self._redo_stack.append(self.scatter)
+            self.scatter = self._undo_stack.pop()
+            self.invalidate_cache()
+
+    def _redo(self) -> None:
+        if len(self._redo_stack) > 0:
+            self._undo_stack.append(self.scatter)
+            self.scatter = self._redo_stack.pop()
+            self.invalidate_cache()
+
+    def _can_undo(self) -> bool:
+        return len(self._undo_stack) > 0
+
+    def _can_redo(self) -> bool:
+        return len(self._redo_stack) > 0
 
     def _update_cache(self) -> None:
         if self._cache_valid:
@@ -230,6 +256,17 @@ class ScatterPresenter:
             10
         )
 
+        # Undo/redo
+        imgui.begin_disabled(not self._can_undo())
+        if imgui.button(icons_fontawesome.ICON_FA_UNDO):
+            self._undo()
+        imgui.end_disabled()
+        imgui.same_line()
+        imgui.begin_disabled(not self._can_redo())
+        if imgui.button(icons_fontawesome.ICON_FA_REDO):
+            self._redo()
+        imgui.end_disabled()
+
     def _gui_plot(self, needs_texture_refresh: bool) -> bool:
         changed = False
 
@@ -252,7 +289,6 @@ class ScatterPresenter:
             refresh_image=needs_texture_refresh
         )
         if image_display_size.x != image_display_size_backup.x or image_display_size.y != image_display_size_backup.y:
-            print("Image size changed")
             self.gui_options.image_size_em = (
                 image_display_size.x / em_pixel_size,
                 image_display_size.y / em_pixel_size
@@ -274,7 +310,10 @@ class ScatterPresenter:
             )
             circle_color = imgui.IM_COL32(0, 0, 255, 60)
             imgui.get_window_draw_list().add_circle_filled(circle_center, circle_radius, circle_color)
+
             # Add a point on click
+            if imgui.is_mouse_clicked(0):
+                self._store_undo()  # first store an undo state at the start of the operation
             if imgui.is_mouse_down(0):
                 for i in range(self.gui_options.brush_intensity):
                     self._add_random_point_around(mouse_position)
@@ -284,8 +323,6 @@ class ScatterPresenter:
             # Draw invisible button to capture mouse events on the image
             imgui.set_cursor_screen_pos(image_position)
             imgui.invisible_button("##Scatter plot", imgui.get_item_rect_size())
-
-            imgui.text("Hey")
 
         return changed
 
