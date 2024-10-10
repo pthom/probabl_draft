@@ -40,11 +40,7 @@ class ScatterWithGui(AnyDataWithGui[ScatterData]):
         self._presenter.invalidate_cache()
 
 
-def register_gui() -> None:
+def register_widget_fiatlight_gui() -> None:
     from fiatlight.fiat_togui.gui_registry import register_type
 
     register_type(ScatterData, ScatterWithGui)
-
-
-# Register the GUI at startup
-register_gui()

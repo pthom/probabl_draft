@@ -45,6 +45,11 @@ def plot_boundary(df: pd.DataFrame, strategy: DecisionStrategy, eps: float=1.0) 
 import fiatlight as fl
 from scatter_widget_bundle.scatter_with_gui import ScatterWithGui
 
+# Version 0: only the scatter widget
+# def scatter_source(scatter_data: ScatterData) -> ScatterData:
+#     return scatter_data
+#
+# fl.run(scatter_source)
 
 # Version 1: only one function
 # def scatter_to_figure(scatter_data: ScatterData, strategy: DecisionStrategy) -> Figure:
@@ -56,21 +61,24 @@ from scatter_widget_bundle.scatter_with_gui import ScatterWithGui
 def scatter_source(scatter_data: ScatterData) -> ScatterData:
     return scatter_data
 
-def scatter_to_figure(scatter_data: ScatterData, strategy: DecisionStrategy, eps: float=1.0) -> Figure:
+@fl.with_fiat_attributes(eps__range=(0.1, 10.0))
+def scatter_to_figure(
+        scatter_data: ScatterData,
+        strategy: DecisionStrategy = DecisionStrategy.logistic_regression,
+        eps: float=1.0) -> Figure:
     return plot_boundary(scatter_data.data_as_pandas(), strategy, eps)
-#
+
 # fl.run([scatter_source, scatter_to_figure])
 
 # Version 3: a function graph
-# def scatter_to_df(scatter_data: ScatterData) -> pd.DataFrame:
-#     return scatter_data.data_as_pandas()
-#
-# graph = fl.FunctionsGraph()
-# graph.add_function(scatter_source)
-# graph.add_function(scatter_to_figure)
-# graph.add_function(scatter_to_df)
-# graph.add_link(scatter_source, scatter_to_df)
-# graph.add_link(scatter_source, scatter_to_figure)
-# fl.run(graph)
+def scatter_to_df(scatter_data: ScatterData) -> pd.DataFrame:
+    return scatter_data.data_as_pandas()
 
-fl.run(scatter_source)
+graph = fl.FunctionsGraph()
+graph.add_function(scatter_source)
+graph.add_function(scatter_to_figure)
+graph.add_function(scatter_to_df)
+graph.add_link(scatter_source, scatter_to_df)
+graph.add_link(scatter_source, scatter_to_figure)
+fl.run(graph)
+

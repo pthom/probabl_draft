@@ -8,7 +8,7 @@ from .coordinate_transformer import CoordinateTransformer
 class ScatterGuiOptions(BaseModel):
     image_size_em: Point2d = (20, 20)
     random_brush_size: float = 0.1  # as a ratio of the scatter bounds
-    brush_intensity: int = 3
+    brush_intensity: int = 1
     selected_class_idx: int = 0
 
 
@@ -76,6 +76,8 @@ class ScatterPresenter:
         return len(self._redo_stack) > 0
 
     def _update_cache(self) -> None:
+        if not (0 <= self.gui_options.selected_class_idx < len(self.scatter.classes)):
+            self.gui_options.selected_class_idx = 0
         if self._cache_valid:
             return
         if self.scatter is None:  # no data yet
@@ -105,7 +107,7 @@ class ScatterPresenter:
         draw = ImageDraw.Draw(image)
 
         # Draw the dots
-        dot_size_em = 0.2
+        dot_size_em = 0.35
         dot_size_px = em_pixel_size * dot_size_em
 
         for cluster in self.scatter.classes:
@@ -219,6 +221,8 @@ class ScatterPresenter:
         for i, scatter_class in enumerate(self.scatter.classes):
             is_selected = self.gui_options.selected_class_idx == i
             with imgui_ctx.push_style_color(imgui.Col_.text.value, color_to_imvec4(scatter_class.color)):
+                # imgui.text(icons_fontawesome.ICON_FA_CIRCLE)
+                # imgui.same_line()
                 if imgui.radio_button(scatter_class.name, is_selected):
                     self.gui_options.selected_class_idx = i
                 imgui.same_line()
@@ -312,13 +316,14 @@ class ScatterPresenter:
             imgui.get_window_draw_list().add_circle_filled(circle_center, circle_radius, circle_color)
 
             # Add a point on click
-            if imgui.is_mouse_clicked(0):
-                self._store_undo()  # first store an undo state at the start of the operation
-            if imgui.is_mouse_down(0):
-                for i in range(self.gui_options.brush_intensity):
-                    self._add_random_point_around(mouse_position)
-                self.invalidate_cache()
-                changed = True
+            if len(self.scatter.classes) > 0:
+                if imgui.is_mouse_clicked(0):
+                    self._store_undo()  # first store an undo state at the start of the operation
+                if imgui.is_mouse_down(0):
+                    for i in range(self.gui_options.brush_intensity):
+                        self._add_random_point_around(mouse_position)
+                    self.invalidate_cache()
+                    changed = True
 
             # Draw invisible button to capture mouse events on the image
             imgui.set_cursor_screen_pos(image_position)
