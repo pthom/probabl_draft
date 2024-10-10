@@ -38,7 +38,7 @@ class ScatterWithGui(AnyDataWithGui[ScatterData]):
 
     def on_change(self, value: ScatterData) -> None:
         self._presenter.scatter = value
-        self._presenter._need_plot_image_update = True
+        self._presenter.invalidate_cache()
 
 
 def register_gui() -> None:

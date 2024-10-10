@@ -1,9 +1,6 @@
 from imgui_bundle import imgui, hello_imgui, ImVec4, imgui_ctx, immvision, ImVec2
 from fiatlight.fiat_kits.fiat_image import ImageRgb
 from pydantic import BaseModel
-import numpy as np
-from numpy.typing import NDArray
-
 from .scatter_data import ScatterData, Point2d, Color
 from .coordinate_transformer import CoordinateTransformer
 
@@ -18,8 +15,36 @@ def color_to_imvec4(color: Color) -> ImVec4:
     r, g, b, a = color[0], color[1], color[2], 255
     return ImVec4(r / 255, g / 255, b / 255, a / 255)
 
+def imvec4_to_color(color: ImVec4) -> Color:
+    return int(color.x * 255), int(color.y * 255), int(color.z * 255)
 
-AffineTransform = NDArray[np.float64]  # affine transformation matrix (2x3)
+
+def color_edit(label: str, color: Color) -> tuple[bool, Color]:
+    def color_to_list(color: Color) -> list[float]:
+        return [c / 255 for c in color]
+    def list_to_color(color_list: list[float]) -> Color:
+        return tuple(int(c * 255) for c in color_list)
+
+    color_list = color_to_list(color)
+    imgui.set_next_item_width(hello_imgui.em_size(6))
+    changed, color_list = imgui.color_picker3(label, color_list)
+    if changed:
+        color = list_to_color(color_list)
+    return changed, color
+
+def color_edit_(label: str, color: Color) -> tuple[bool, Color]:
+    def color_to_list(color: Color) -> list[float]:
+        return [c / 255 for c in color]
+    def list_to_color(color_list: list[float]) -> Color:
+        return tuple(int(c * 255) for c in color_list)
+
+    color_list = color_to_list(color)
+    imgui.set_next_item_width(hello_imgui.em_size(4))
+    changed, color_list = imgui.color_edit3(label, color_list)
+    if changed:
+        print("color_list", color_list)
+        color = list_to_color(color_list)
+    return changed, color
 
 
 class ScatterPresenter:
@@ -34,6 +59,9 @@ class ScatterPresenter:
     def __init__(self, scatter: ScatterData | None = None):
         self.scatter = scatter
         self.gui_options = ScatterGuiOptions()
+
+    def invalidate_cache(self) -> None:
+        self._cache_valid = False
 
     def _update_cache(self) -> None:
         if self._cache_valid:
@@ -114,6 +142,34 @@ class ScatterPresenter:
     # ========================================
     # GUI
     # ========================================
+    def _gui_bounds(self) -> bool:
+        def edit_one_value(label: str, value: float) -> float:
+            imgui.set_next_item_width(hello_imgui.em_size(10))
+            changed_one_value, value = imgui.slider_float(label, value, -1000, 1000, "%.3f",
+                                                          imgui.SliderFlags_.logarithmic.value)
+            nonlocal changed
+            changed = changed or changed_one_value
+            return value
+
+        changed = False
+        x_min = self.scatter.bounding[0][0]
+        y_min = self.scatter.bounding[0][1]
+        x_max = self.scatter.bounding[1][0]
+        y_max = self.scatter.bounding[1][1]
+
+        x_min = edit_one_value("Min x", x_min)
+        imgui.same_line()
+        y_min = edit_one_value("Min y", y_min)
+
+        x_max = edit_one_value("Max x", x_max)
+        imgui.same_line()
+        y_max = edit_one_value("Max y", y_max)
+
+        if changed:
+            self.scatter.bounding = ((x_min, y_min), (x_max, y_max))
+
+        return changed
+
     def _gui_options(self) -> None:
         """This draws the options on top of the scatter plot."""
         for i, scatter_class in enumerate(self.scatter.classes):
@@ -126,20 +182,35 @@ class ScatterPresenter:
             imgui.same_line()
         imgui.new_line()
 
-        if imgui.collapsing_header("Edit classes"):
+        if imgui.collapsing_header("Edit classes and bounds"):
+            imgui.separator_text("Bounds")
+            changed_bounds = self._gui_bounds()
+            if changed_bounds:
+                self.invalidate_cache()
+
+            imgui.separator_text("Classes")
             for i, scatter_class in enumerate(self.scatter.classes):
-                imgui.push_id(str(i))
-                with imgui_ctx.begin_horizontal("edit class"):
-                    imgui.set_next_item_width(100)
-                    _, scatter_class.name = imgui.input_text("Name", scatter_class.name)
-                    if imgui.small_button("Clear"):
-                        scatter_class.points = []
-                        self._need_plot_image_update = True
-                    if imgui.small_button("Delete"):
-                        del self.scatter.classes[i]
-                        self.gui_options.selected_class_idx = max(0, self.gui_options.selected_class_idx - 1)
-                        self._need_plot_image_update = True
-                    imgui.pop_id()
+                imgui.push_id(str(i))  # Ensure unique ids within the loop (labels are ids for imgui)
+
+                imgui.set_next_item_width(100)
+                _, scatter_class.name = imgui.input_text("Name", scatter_class.name)
+                imgui.same_line()
+
+                changed_color, scatter_class.color = color_edit("Color", scatter_class.color)
+                if changed_color:
+                    self.invalidate_cache()
+                imgui.same_line()
+
+                if imgui.small_button("Clear"):
+                    scatter_class.points = []
+                    self.invalidate_cache()
+                imgui.same_line()
+
+                if imgui.small_button("Delete"):
+                    del self.scatter.classes[i]
+                    self.gui_options.selected_class_idx = max(0, self.gui_options.selected_class_idx - 1)
+                    self.invalidate_cache()
+                imgui.pop_id()
 
         # Brush size
         image_width_pixels = hello_imgui.em_size(self.gui_options.image_size_em[0])
@@ -179,7 +250,7 @@ class ScatterPresenter:
             # Add a point on click
             if imgui.is_mouse_down(0):
                 self._add_random_point_around(mouse_position)
-                self._need_plot_image_update = True
+                self.invalidate_cache()
                 changed = True
 
             # Draw invisible button to capture mouse events
@@ -191,15 +262,11 @@ class ScatterPresenter:
         return changed
 
     def gui(self) -> bool:
+        needs_texture_refresh = not self._cache_valid
         self._update_cache()
         if self.scatter is None:
             imgui.text("No scatter data")
             return False
-
-        needs_texture_refresh = self._need_plot_image_update
-        if self._need_plot_image_update:
-            self._compute_plot_image()
-            self._need_plot_image_update = False
 
         changed = False
         self._gui_options()
