@@ -13,13 +13,13 @@ class ScatterWithGui(AnyDataWithGui[ScatterData]):
         self._presenter = ScatterPresenter()
 
         # present_str: short string form (when presenting in collapsed form)
-        self.callbacks.present_str = self.present_str
+        self.callbacks.present_str = lambda value: value.info()
 
         # present: full form (when presenting in expanded form). Only needed if we want to present it as a function output)
         # self.callbacks.present = self.present  #
 
         # default_value_provider: function that provides a default value. Should be provided, if not using the default constructor
-        self.callbacks.default_value_provider = self.default_value_provider
+        self.callbacks.default_value_provider = ScatterData.make_default
 
         # edit: function that edits the value. Should be provided, if the value is editable
         # (this is where we do the graphical user edition of the scatter data)
@@ -38,9 +38,6 @@ class ScatterWithGui(AnyDataWithGui[ScatterData]):
         # clipboard_copy_str: function that copies the value as a string to the clipboard
         self.callbacks.clipboard_copy_str = lambda value: value.data_as_pandas().to_csv()
 
-    def present_str(self, value: ScatterData) -> str:
-        return value.info()
-
     # def present(self, value: ScatterData) -> None:
     #     imgui.text(f"present {value.info()}")
 
@@ -48,10 +45,6 @@ class ScatterWithGui(AnyDataWithGui[ScatterData]):
         # _value is not used, it is cached in the presenter
         changed = self._presenter.gui()
         return changed, self._presenter.scatter
-
-    @staticmethod
-    def default_value_provider() -> ScatterData:
-        return ScatterData.make_default()
 
     def on_change(self, value: ScatterData) -> None:
         self._presenter.scatter = value

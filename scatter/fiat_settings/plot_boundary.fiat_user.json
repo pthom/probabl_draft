@@ -5693,13 +5693,29 @@
                 "_function_node": {
                     "inputs": {
                         "scatter_data": {
-                            "cb_options": {},
+                            "cb_options": {
+                                "image_size_em": [
+                                    20.0,
+                                    20.0
+                                ],
+                                "random_brush_size": 0.10000000149011612,
+                                "brush_intensity": 1,
+                                "selected_class_idx": 0
+                            },
                             "expanded": true
                         }
                     },
                     "outputs": {
                         "0": {
-                            "cb_options": {},
+                            "cb_options": {
+                                "image_size_em": [
+                                    20.0,
+                                    20.0
+                                ],
+                                "random_brush_size": 0.1,
+                                "brush_intensity": 1,
+                                "selected_class_idx": 0
+                            },
                             "expanded": true
                         }
                     }
@@ -5713,13 +5729,29 @@
             "function_node": {
                 "inputs": {
                     "scatter_data": {
-                        "cb_options": {},
+                        "cb_options": {
+                            "image_size_em": [
+                                20.0,
+                                20.0
+                            ],
+                            "random_brush_size": 0.10000000149011612,
+                            "brush_intensity": 1,
+                            "selected_class_idx": 0
+                        },
                         "expanded": true
                     }
                 },
                 "outputs": {
                     "0": {
-                        "cb_options": {},
+                        "cb_options": {
+                            "image_size_em": [
+                                20.0,
+                                20.0
+                            ],
+                            "random_brush_size": 0.1,
+                            "brush_intensity": 1,
+                            "selected_class_idx": 0
+                        },
                         "expanded": true
                     }
                 }
@@ -5750,7 +5782,15 @@
                 "_function_node": {
                     "inputs": {
                         "scatter_data": {
-                            "cb_options": {},
+                            "cb_options": {
+                                "image_size_em": [
+                                    20.0,
+                                    20.0
+                                ],
+                                "random_brush_size": 0.1,
+                                "brush_intensity": 1,
+                                "selected_class_idx": 0
+                            },
                             "expanded": false
                         }
                     },
@@ -5797,7 +5837,15 @@
             "function_node": {
                 "inputs": {
                     "scatter_data": {
-                        "cb_options": {},
+                        "cb_options": {
+                            "image_size_em": [
+                                20.0,
+                                20.0
+                            ],
+                            "random_brush_size": 0.1,
+                            "brush_intensity": 1,
+                            "selected_class_idx": 0
+                        },
                         "expanded": false
                     }
                 },

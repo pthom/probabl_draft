@@ -4191,6 +4191,42 @@
                                         [
                                             -0.04328225243860582,
                                             0.9596070795923075
+                                        ],
+                                        [
+                                            0.995584152405381,
+                                            0.08843069765040781
+                                        ],
+                                        [
+                                            0.07633756767718673,
+                                            0.9608278531506576
+                                        ],
+                                        [
+                                            0.0955614092857252,
+                                            1.0181084753891836
+                                        ],
+                                        [
+                                            0.00404146645710351,
+                                            0.9930068176371043
+                                        ],
+                                        [
+                                            0.9459551549990414,
+                                            0.14697048919355443
+                                        ],
+                                        [
+                                            -0.06057842735021564,
+                                            0.9934811843431817
+                                        ],
+                                        [
+                                            -0.01742537770798136,
+                                            0.9994086844404736
+                                        ],
+                                        [
+                                            -0.05076600289114824,
+                                            0.9996647206754288
+                                        ],
+                                        [
+                                            -0.05669811891050397,
+                                            1.0314932630651512
                                         ]
                                     ]
                                 },
@@ -9097,13 +9133,29 @@
                 "_function_node": {
                     "inputs": {
                         "scatter_data": {
-                            "cb_options": {},
+                            "cb_options": {
+                                "image_size_em": [
+                                    27.4,
+                                    27.4
+                                ],
+                                "random_brush_size": 0.10000000149011612,
+                                "brush_intensity": 1,
+                                "selected_class_idx": 0
+                            },
                             "expanded": true
                         }
                     },
                     "outputs": {
                         "0": {
-                            "cb_options": {},
+                            "cb_options": {
+                                "image_size_em": [
+                                    20.0,
+                                    20.0
+                                ],
+                                "random_brush_size": 0.1,
+                                "brush_intensity": 1,
+                                "selected_class_idx": 0
+                            },
                             "expanded": true
                         }
                     }
@@ -9117,13 +9169,29 @@
             "function_node": {
                 "inputs": {
                     "scatter_data": {
-                        "cb_options": {},
+                        "cb_options": {
+                            "image_size_em": [
+                                27.4,
+                                27.4
+                            ],
+                            "random_brush_size": 0.10000000149011612,
+                            "brush_intensity": 1,
+                            "selected_class_idx": 0
+                        },
                         "expanded": true
                     }
                 },
                 "outputs": {
                     "0": {
-                        "cb_options": {},
+                        "cb_options": {
+                            "image_size_em": [
+                                20.0,
+                                20.0
+                            ],
+                            "random_brush_size": 0.1,
+                            "brush_intensity": 1,
+                            "selected_class_idx": 0
+                        },
                         "expanded": true
                     }
                 }
@@ -9154,7 +9222,15 @@
                 "_function_node": {
                     "inputs": {
                         "scatter_data": {
-                            "cb_options": {},
+                            "cb_options": {
+                                "image_size_em": [
+                                    20.0,
+                                    20.0
+                                ],
+                                "random_brush_size": 0.1,
+                                "brush_intensity": 1,
+                                "selected_class_idx": 0
+                            },
                             "expanded": false
                         },
                         "strategy": {
@@ -9168,12 +9244,7 @@
                     },
                     "outputs": {
                         "0": {
-                            "cb_options": {
-                                "figure_size": {
-                                    "x": 640.0,
-                                    "y": 480.0
-                                }
-                            },
+                            "cb_options": {},
                             "expanded": true
                         }
                     }
@@ -9187,7 +9258,15 @@
             "function_node": {
                 "inputs": {
                     "scatter_data": {
-                        "cb_options": {},
+                        "cb_options": {
+                            "image_size_em": [
+                                20.0,
+                                20.0
+                            ],
+                            "random_brush_size": 0.1,
+                            "brush_intensity": 1,
+                            "selected_class_idx": 0
+                        },
                         "expanded": false
                     },
                     "strategy": {
@@ -9201,12 +9280,7 @@
                 },
                 "outputs": {
                     "0": {
-                        "cb_options": {
-                            "figure_size": {
-                                "x": 640.0,
-                                "y": 480.0
-                            }
-                        },
+                        "cb_options": {},
                         "expanded": true
                     }
                 }
@@ -9237,7 +9311,15 @@
                 "_function_node": {
                     "inputs": {
                         "scatter_data": {
-                            "cb_options": {},
+                            "cb_options": {
+                                "image_size_em": [
+                                    20.0,
+                                    20.0
+                                ],
+                                "random_brush_size": 0.1,
+                                "brush_intensity": 1,
+                                "selected_class_idx": 0
+                            },
                             "expanded": false
                         }
                     },
@@ -9272,7 +9354,15 @@
             "function_node": {
                 "inputs": {
                     "scatter_data": {
-                        "cb_options": {},
+                        "cb_options": {
+                            "image_size_em": [
+                                20.0,
+                                20.0
+                            ],
+                            "random_brush_size": 0.1,
+                            "brush_intensity": 1,
+                            "selected_class_idx": 0
+                        },
                         "expanded": false
                     }
                 },
