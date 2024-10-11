@@ -3,9 +3,9 @@ matplotlib.use('Agg')
 
 from matplotlib.figure import Figure
 from matplotlib import pyplot as plt
-from sklearn.linear_model import LogisticRegression
-from sklearn.inspection import DecisionBoundaryDisplay
-from sklearn.tree import DecisionTreeClassifier
+from sklearn.linear_model import LogisticRegression  # type: ignore
+from sklearn.inspection import DecisionBoundaryDisplay  # type: ignore
+from sklearn.tree import DecisionTreeClassifier  # type: ignore
 import pandas as pd
 import numpy as np
 from enum import Enum
@@ -51,7 +51,7 @@ def scatter_source(scatter_data: ScatterData) -> ScatterData:
 def scatter_to_figure(
         scatter_data: ScatterData,
         strategy: DecisionStrategy = DecisionStrategy.logistic_regression,
-        eps: float=1.0) -> Figure:
+        eps: float=1.0) -> Figure | None:
     return plot_boundary(scatter_data.data_as_pandas(), strategy, eps)
 
 

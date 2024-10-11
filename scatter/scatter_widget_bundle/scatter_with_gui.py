@@ -12,13 +12,31 @@ class ScatterWithGui(AnyDataWithGui[ScatterData]):
         super().__init__(ScatterData)
         self._presenter = ScatterPresenter()
 
-        self.callbacks.present_str = self.present_str  # needed when presenting in collapsed form
-        # self.callbacks.present = self.present  # only needed if we want to present it as a function output
-        self.callbacks.default_value_provider = self.default_value_provider  # needed since we do not use the default constructor
-        self.callbacks.edit = self.edit  # needed for edition
+        # present_str: short string form (when presenting in collapsed form)
+        self.callbacks.present_str = self.present_str
 
-        # on_change needs to be set, since the presenter has a cache (this is where it will update its cache)
+        # present: full form (when presenting in expanded form). Only needed if we want to present it as a function output)
+        # self.callbacks.present = self.present  #
+
+        # default_value_provider: function that provides a default value. Should be provided, if not using the default constructor
+        self.callbacks.default_value_provider = self.default_value_provider
+
+        # edit: function that edits the value. Should be provided, if the value is editable
+        # (this is where we do the graphical user edition of the scatter data)
+        self.callbacks.edit = self.edit
+
+        # on_change needs to be set, since the presenter has a cache
+        # (this is where it will update its cache)
         self.callbacks.on_change = self.on_change
+
+        # save/load_gui_options_to_json:
+        # here, we save and load the gui options to/from a json dictionary
+        # (this is where we save the presenter internal state: size of the image, etc.)
+        self.callbacks.save_gui_options_to_json = self._presenter.save_gui_options_to_json
+        self.callbacks.load_gui_options_from_json = self._presenter.load_gui_options_from_json
+
+        # clipboard_copy_str: function that copies the value as a string to the clipboard
+        self.callbacks.clipboard_copy_str = lambda value: value.data_as_pandas().to_csv()
 
     def present_str(self, value: ScatterData) -> str:
         return value.info()

@@ -1,5 +1,6 @@
 from imgui_bundle import imgui, hello_imgui, ImVec4, imgui_ctx, immvision, ImVec2, icons_fontawesome
 from fiatlight.fiat_kits.fiat_image import ImageRgb
+from fiatlight.fiat_types import JsonDict
 from pydantic import BaseModel
 from .scatter_data import ScatterData, ScatterCluster, Point2d, Color
 from .coordinate_transformer import CoordinateTransformer
@@ -35,17 +36,19 @@ def color_edit(label: str, color: Color) -> tuple[bool, Color]:
 
 class ScatterPresenter:
     # Serializable data
-    scatter: ScatterData | None
+    scatter: ScatterData
     gui_options: ScatterGuiOptions
     # Caches
     _cache_valid: bool = False
     _plot_image: ImageRgb  # a cache of the scatter plot as an image
-    _transformer: CoordinateTransformer | None = None  # Coordinate transformer instance
+    _transformer: CoordinateTransformer  # Coordinate transformer instance
     # undo/redo
     _undo_stack: list[ScatterData] = []
     _redo_stack: list[ScatterData] = []
 
     def __init__(self, scatter: ScatterData | None = None):
+        if scatter is None:
+            scatter = ScatterData.make_default()
         self.scatter = scatter
         self.gui_options = ScatterGuiOptions()
 
@@ -157,6 +160,8 @@ class ScatterPresenter:
     # GUI
     # ========================================
     def _gui_bounds(self) -> bool:
+        changed = False
+
         def edit_one_value(label: str, value: float) -> float:
             imgui.set_next_item_width(hello_imgui.em_size(10))
             changed_one_value, value = imgui.slider_float(label, value, -1000, 1000, "%.3f",
@@ -165,7 +170,6 @@ class ScatterPresenter:
             changed = changed or changed_one_value
             return value
 
-        changed = False
         x_min = self.scatter.bounding[0][0]
         y_min = self.scatter.bounding[0][1]
         x_max = self.scatter.bounding[1][0]
@@ -342,3 +346,10 @@ class ScatterPresenter:
         self._gui_options()
         changed = self._gui_plot(needs_texture_refresh)
         return changed
+
+    def save_gui_options_to_json(self) -> JsonDict:
+        return self.gui_options.model_dump(mode="json")
+
+    def load_gui_options_from_json(self, json_dict: JsonDict) -> None:
+        self.gui_options = ScatterGuiOptions(**json_dict)
+        self.invalidate_cache()
